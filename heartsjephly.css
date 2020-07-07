@@ -67,6 +67,50 @@
     }
 */
 
+#playertables {
+    position: relative;
+    width: 710px;
+    height: 340px;
+}
 
+.playertablename {
+    font-weight: bold;
+}
+
+.playertable {
+    position: absolute;
+    text-align: center;
+    width: 180px;
+    height: 130px;
+}
+.playertable_N {
+    left: 50%;
+    top: 0px;
+    margin-left: -90px;
+}
+.playertable_S {
+    left: 50%;
+    bottom: 0px;
+    margin-left: -90px;
+}
+.playertable_W {
+    left: 0px;
+    top: 50%;
+    margin-top: -55px;
+}
+.playertable_E {
+    right: 0px;
+    top: 50%;
+    margin-top: -55px;
+}
+
+.playertablecard {
+    display: inline-block;
+    position: relative;
+    margin-top: 5px;
+    width: 72px;
+    height: 96px;
+    background-image: url('img/cards.jpg');
+}
 
 
