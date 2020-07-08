@@ -33,13 +33,19 @@ class heartsjephly extends Table
         parent::__construct();
         
         self::initGameStateLabels( array( 
+            'roundType' => 10, // 0, 1, 2, 3 = pass left, pass right, pass opposite, no pass
+            'trickSuit' => 11, // 1, 2, 3, 4 = Spades, Hearts, Clubs, Diamonds
+            'heartsBroken' => 12, // 0 or 1 = false, true
             //    "my_first_global_variable" => 10,
             //    "my_second_global_variable" => 11,
             //      ...
             //    "my_first_game_variant" => 100,
             //    "my_second_game_variant" => 101,
             //      ...
-        ) );        
+        ) );
+
+        $this->cards = self::getNew( 'module.common.deck' );
+        $this->cards->init( 'card' );
 	}
 	
     protected function getGameName( )
