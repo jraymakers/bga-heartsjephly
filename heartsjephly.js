@@ -18,7 +18,8 @@
 define([
     "dojo","dojo/_base/declare",
     "ebg/core/gamegui",
-    "ebg/counter"
+    "ebg/counter",
+    "ebg/stock"
 ],
 function (dojo, declare) {
     return declare("bgagame.heartsjephly", ebg.core.gamegui, {
@@ -28,6 +29,9 @@ function (dojo, declare) {
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
+
+            this.cardwidth = 72;
+            this.cardheight = 96;
 
         },
         
@@ -57,6 +61,22 @@ function (dojo, declare) {
             }
             
             // TODO: Set up your game interface here, according to "gamedatas"
+
+            this.playerHand = new ebg.stock();
+            this.playerHand.create( this, $('myhand'), this.cardwidth, this.cardheight );
+            this.playerHand.image_items_per_row = 13;
+
+            for (var suit = 1; suit <= 4; suit++) {
+                for (var rank = 2; rank <= 14; rank++) {
+                    var card_type_id = this.getCardTypeId(suit, rank);
+                    this.playerHand.addItemType(card_type_id, card_type_id, g_gamethemeurl + 'img/cards.jpg', card_type_id);
+                }
+            }
+
+            // for testing
+            this.playerHand.addToStockWithId( this.getCardTypeId( 2, 5 ), 42 );
+
+            dojo.connect( this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged' );
             
  
             // Setup game notifications to handle (see "setupNotifications" method below)
@@ -158,6 +178,10 @@ function (dojo, declare) {
         
         */
 
+        getCardTypeId: function (suit, rank) {
+            return (suit - 1) * 13 + (rank - 2);
+        },
+
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -206,6 +230,24 @@ function (dojo, declare) {
         },        
         
         */
+
+        onPlayerHandSelectionChanged: function () {
+            var items = this.playerHand.getSelectedItems();
+
+            if (items.length > 0) {
+                if (this.checkAction('playCard', true)) {
+
+                    var card_id = items[0].id;
+                    console.log('on playCard '+card_id);
+
+                    this.playerHand.unselectAll();
+                } else if (this.checkAction('giveCards')) {
+                    // let player select some cards
+                } else {
+                    this.playerHand.unselectAll();
+                }
+            }
+        },
 
         
         ///////////////////////////////////////////////////
