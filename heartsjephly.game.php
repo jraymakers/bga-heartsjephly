@@ -34,7 +34,7 @@ class heartsjephly extends Table
         
         self::initGameStateLabels( array( 
             'roundType' => 10, // 0, 1, 2, 3 = pass left, pass right, pass opposite, no pass
-            'trickSuit' => 11, // 1, 2, 3, 4 = Spades, Hearts, Clubs, Diamonds
+            'trickSuit' => 11, // 0, 1, 2, 3, 4 = none, Spades, Hearts, Clubs, Diamonds
             'heartsBroken' => 12, // 0 or 1 = false, true
             //    "my_first_global_variable" => 10,
             //    "my_second_global_variable" => 11,
@@ -87,6 +87,10 @@ class heartsjephly extends Table
 
         // Init global values with their initial values
         //self::setGameStateInitialValue( 'my_first_global_variable', 0 );
+
+        self::setGameStateInitialValue( 'roundType', 0 );
+        self::setGameStateInitialValue( 'trickSuit', 0 );
+        self::setGameStateInitialValue( 'heartsBroken', 0 );
         
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
@@ -94,6 +98,15 @@ class heartsjephly extends Table
         //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
 
         // TODO: setup the initial game situation here
+
+        $cards = array();
+        foreach ( $this->suits as $suit_id => $suit ) {
+            for ($rank = 2; $rank <= 14; $rank++) {
+                $cards[] = array( 'type' => $suit_id, 'type_arg' => $rank, 'nbr' => 1 );
+            }
+        }
+
+        $this->cards->createCards( $cards, 'deck' );
        
 
         // Activate first player (which is in general a good idea :) )
