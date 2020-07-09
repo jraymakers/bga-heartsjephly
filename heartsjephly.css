@@ -110,7 +110,11 @@
     margin-top: 5px;
     width: 72px;
     height: 96px;
-    background-image: url('img/cards.jpg');
 }
 
-
+.cardontable {
+    position: absolute;
+    width: 72px;
+    height: 96px;
+    background-image: url('img/cards.jpg');
+}

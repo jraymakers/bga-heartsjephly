@@ -107,6 +107,13 @@ class heartsjephly extends Table
         }
 
         $this->cards->createCards( $cards, 'deck' );
+
+        $this->cards->shuffle('deck');
+
+        $players = self::loadPlayersBasicInfos();
+        foreach ($players as $player_id => $player) {
+            $cards = $this->cards->pickCards(13, 'deck', $player_id);
+        }
        
 
         // Activate first player (which is in general a good idea :) )
@@ -136,6 +143,10 @@ class heartsjephly extends Table
         $result['players'] = self::getCollectionFromDb( $sql );
   
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
+
+        $result['hand'] = $this->cards->getCardsInLocation( 'hand', $current_player_id );
+
+        $result['cardsontable'] = $this->cards->getCardsInLocation( 'cardsontable' );
   
         return $result;
     }

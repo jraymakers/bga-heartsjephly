@@ -73,8 +73,20 @@ function (dojo, declare) {
                 }
             }
 
-            // for testing
-            this.playerHand.addToStockWithId( this.getCardTypeId( 2, 5 ), 42 );
+            for (var i in gamedatas.hand) {
+                var card = this.gamedatas.hand[i];
+                var suit = card.type;
+                var rank = card.type_arg;
+                this.playerHand.addToStockWithId(this.getCardTypeId(suit, rank), card.id);
+            }
+
+            for (var i in gamedatas.cardsontable) {
+                var card = this.gamedatas.cardsontable[i];
+                var suit = card.type;
+                var rank = card.type_arg;
+                var player_id = card.location_arg;
+                this.playCardOnTable(player_id, suit, rank, card.id);
+            }
 
             dojo.connect( this.playerHand, 'onChangeSelection', this, 'onPlayerHandSelectionChanged' );
             
@@ -182,6 +194,25 @@ function (dojo, declare) {
             return (suit - 1) * 13 + (rank - 2);
         },
 
+        playCardOnTable: function(player_id, suit, rank, card_id) {
+            dojo.place(this.format_block('jstpl_cardontable', {
+                x: this.cardwidth * (rank - 2),
+                y: this.cardheight * (suit - 1),
+                player_id: player_id
+            }), 'playertablecard_'+player_id);
+            
+            if (player_id != this.player_id) {
+                this.placeOnObject('cardontable_'+player_id, 'overall_player_board_'+player_id);
+            } else {
+                if ($('myhand_item_'+card_id)) {
+                    this.placeOnObject('cardontable_'+player_id, 'myhand_item_'+card_id);
+                    this.playerHand.removeFromStockById(card_id);
+                }
+            }
+
+            this.slideToObject('cardontable_'+player_id, 'playertablecard_'+player_id).play();
+        },
+
 
         ///////////////////////////////////////////////////
         //// Player's action
@@ -239,6 +270,11 @@ function (dojo, declare) {
 
                     var card_id = items[0].id;
                     console.log('on playCard '+card_id);
+
+                    var type = items[0].type;
+                    var suit = Math.floor(type / 13) + 1;
+                    var rank = type % 13 + 2;
+                    this.playCardOnTable(this.player_id, suit, rank, card_id);
 
                     this.playerHand.unselectAll();
                 } else if (this.checkAction('giveCards')) {
