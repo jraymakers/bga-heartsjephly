@@ -216,7 +216,27 @@ class heartsjephly extends Table
     function playCard($card_id) {
         self::checkAction('playCard');
         $player_id = self::getActivePlayerId();
-        throw new BgaUserException(self::_('Not implemented: ') . "$player_id plays $card_id");
+        $this->cards->moveCard($card_id, 'cardsontable', $player_id);
+        
+        // TODO check rules here
+
+        $currentCard = $this->cards->getCard($card_id);
+        self::notifyAllPlayers(
+            'playCard',
+            clienttranslate('${player_name} plays ${rank_displayed} ${suit_displayed}'), 
+            array(
+                'i18n' => array( 'rank_displayed', 'suit_displayed' ),
+                'card_id' => $card_id,
+                'player_id' => $player_id,
+                'player_name' => self::getActivePlayerName(),
+                'rank' => $currentCard['type_arg'],
+                'rank_displayed' => $this->rank_labels[$currentCard['type_arg']],
+                'suit' => $currentCard['type'],
+                'suit_displayed' => $this->suits[$currentCard['type']]['name']
+            )
+        );
+
+        $this->gamestate->nextState('playCard');
     }
 
     
@@ -300,7 +320,22 @@ class heartsjephly extends Table
             $best_value_player_id = self::activeNextPlayer(); // TODO determine trick winner
             $this->cards->moveAllCardsInLocation('cardsontable', 'cardswon', null, $best_value_player_id);
 
-            if ($this->cards->cardCountInLocation('hand') == 0) {
+            $players = self::loadPlayersBasicInfos();
+            self::notifyAllPlayers(
+                'trickWin',
+                clienttranslate('${player_name} wins the trick'),
+                array(
+                    'player_id' => $best_value_player_id,
+                    'player_name' => $players[$best_value_player_id]['player_name']
+                )
+            );
+            self::notifyAllPlayers(
+                'giveAllCardsToPlayer', '', array(
+                    'player_id' => $best_value_player_id
+                )
+            );
+
+            if ($this->cards->countCardInLocation('hand') == 0) {
                 // end of hand
                 $this->gamestate->nextState('endHand');
             } else {

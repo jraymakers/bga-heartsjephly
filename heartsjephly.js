@@ -266,15 +266,16 @@ function (dojo, declare) {
             var items = this.playerHand.getSelectedItems();
 
             if (items.length > 0) {
-                if (this.checkAction('playCard', true)) {
+                var action = 'playCard';
+                if (this.checkAction(action, true)) {
 
                     var card_id = items[0].id;
-                    console.log('on playCard '+card_id);
-
-                    var type = items[0].type;
-                    var suit = Math.floor(type / 13) + 1;
-                    var rank = type % 13 + 2;
-                    this.playCardOnTable(this.player_id, suit, rank, card_id);
+                    this.ajaxcall('/' + this.game_name + '/' + this.game_name + '/' + action + '.html', {
+                        id: card_id,
+                        lock: true
+                    }, this, function (result) {
+                    }, function (is_error) {
+                    });
 
                     this.playerHand.unselectAll();
                 } else if (this.checkAction('giveCards')) {
@@ -313,6 +314,12 @@ function (dojo, declare) {
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
             // 
+
+            dojo.subscribe('newHand', this, 'notif_newHand');
+            dojo.subscribe('playCard', this, 'notif_playCard');
+            dojo.subscribe('trickWin', this, 'notif_trickWin');
+            this.notifqueue.setSynchronous('trickWin', 1000);
+            dojo.subscribe('giveAllCardsToPlayer', this, 'notif_giveAllCardsToPlayer');
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods
@@ -331,5 +338,36 @@ function (dojo, declare) {
         },    
         
         */
+
+        notif_newHand: function (notif) {
+            this.playerHand.removeAll();
+
+            for (var i in notif.args.cards) {
+                var card = notif.args.cards[i];
+                var suit = card.type;
+                var rank = card.type_arg;
+                this.playerHand.addToStockWithId(this.getCardTypeId(suit, rank), card.id);
+            }
+        },
+
+        notif_playCard: function (notif) {
+            this.playCardOnTable(notif.args.player_id, notif.args.suit, notif.args.rank, notif.args.card_id);
+        },
+
+        notif_trickWin: function (notif) {
+            // do nothing; just pause
+        },
+
+        notif_giveAllCardsToPlayer: function (notif) {
+            var winner_id = notif.args.player_id;
+            for (var player_id in this.gamedatas.players) {
+                var anim = this.slideToObject('cardontable_'+player_id, 'overall_player_board_'+winner_id);
+                dojo.connect(anim, 'onEnd', function (node) {
+                    dojo.destroy(node);
+                });
+                anim.play();
+            }
+        }
+
    });             
 });
