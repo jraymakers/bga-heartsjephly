@@ -22,8 +22,8 @@ require_once( APP_GAMEMODULE_PATH.'module/table/table.game.php' );
 
 class heartsjephly extends Table
 {
-	function __construct( )
-	{
+    function __construct( )
+    {
         // Your global variables labels:
         //  Here, you can assign labels to global variables you are using for this game.
         //  You can use any number of global variables with IDs between 10 and 99.
@@ -46,13 +46,13 @@ class heartsjephly extends Table
 
         $this->cards = self::getNew( 'module.common.deck' );
         $this->cards->init( 'card' );
-	}
-	
+    }
+    
     protected function getGameName( )
     {
-		// Used for translations and stuff. Please do not modify.
+        // Used for translations and stuff. Please do not modify.
         return "heartsjephly";
-    }	
+    }
 
     /*
         setupNewGame:
@@ -114,7 +114,6 @@ class heartsjephly extends Table
         foreach ($players as $player_id => $player) {
             $cards = $this->cards->pickCards(13, 'deck', $player_id);
         }
-       
 
         // Activate first player (which is in general a good idea :) )
         $this->activeNextPlayer();
@@ -134,20 +133,20 @@ class heartsjephly extends Table
     protected function getAllDatas()
     {
         $result = array();
-    
+
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
-    
+
         // Get information about players
         // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
         $sql = "SELECT player_id id, player_score score FROM player ";
         $result['players'] = self::getCollectionFromDb( $sql );
-  
+
         // TODO: Gather all information about current game situation (visible by player $current_player_id).
 
         $result['hand'] = $this->cards->getCardsInLocation( 'hand', $current_player_id );
 
         $result['cardsontable'] = $this->cards->getCardsInLocation( 'cardsontable' );
-  
+
         return $result;
     }
 
@@ -214,6 +213,12 @@ class heartsjephly extends Table
     
     */
 
+    function playCard($card_id) {
+        self::checkAction('playCard');
+        $player_id = self::getActivePlayerId();
+        throw new BgaUserException(self::_('Not implemented: ') . "$player_id plays $card_id");
+    }
+
     
 //////////////////////////////////////////////////////////////////////////////
 //////////// Game state arguments
@@ -242,6 +247,10 @@ class heartsjephly extends Table
     }    
     */
 
+    function argGiveCards() {
+        return array ();
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Game state actions
 ////////////
@@ -264,6 +273,52 @@ class heartsjephly extends Table
     }    
     */
 
+    function stNewHand() {
+        $this->cards->moveAllCardsInLocation(null, 'deck');
+        $this->cards->shuffle('deck');
+
+        $players = self::loadPlayersBasicInfos();
+        foreach ($players as $player_id => $player) {
+            $cards = $this->cards->pickCards(13, 'deck', $player_id);
+            self::notifyPlayer($player_id, 'newHand', '', array( 'cards' => $cards ));
+        }
+
+        self::setGameStateValue('heartsBroken', 0);
+
+        $this->gamestate->nextState();
+    }
+
+    function stNewTrick() {
+        // TODO set active player to winner of last trick or owner of 2C
+        self::setGameStateValue('trickSuit', 0);
+        $this->gamestate->nextState();
+    }
+
+    function stNextPlayer() {
+        if ($this->cards->countCardInLocation('cardsontable') == 4) {
+            // end of trick
+            $best_value_player_id = self::activeNextPlayer(); // TODO determine trick winner
+            $this->cards->moveAllCardsInLocation('cardsontable', 'cardswon', null, $best_value_player_id);
+
+            if ($this->cards->cardCountInLocation('hand') == 0) {
+                // end of hand
+                $this->gamestate->nextState('endHand');
+            } else {
+                // end of trick but not end of hand
+                $this->gamestate->nextState('nextTrick');
+            }
+        } else {
+            // not end of trick
+            $player_id = self::activeNextPlayer();
+            self::giveExtraTime($player_id);
+            $this->gamestate->nextState('nextPlayer');
+        }
+    }
+
+    function stEndHand() {
+        $this->gamestate->nextState('nextHand');
+    }
+
 //////////////////////////////////////////////////////////////////////////////
 //////////// Zombie
 ////////////
@@ -283,13 +338,13 @@ class heartsjephly extends Table
 
     function zombieTurn( $state, $active_player )
     {
-    	$statename = $state['name'];
-    	
+        $statename = $state['name'];
+        
         if ($state['type'] === "activeplayer") {
             switch ($statename) {
                 default:
                     $this->gamestate->nextState( "zombiePass" );
-                	break;
+                    break;
             }
 
             return;
@@ -346,5 +401,5 @@ class heartsjephly extends Table
 //
 
 
-    }    
+    }
 }

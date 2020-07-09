@@ -23,17 +23,18 @@
  * Note: if the HTML of your game interface is always the same, you don't have to place anything here.
  *
  */
-  
-  require_once( APP_BASE_PATH."view/common/game.view.php" );
-  
-  class view_heartsjephly_heartsjephly extends game_view
-  {
+
+require_once( APP_BASE_PATH."view/common/game.view.php" );
+
+class view_heartsjephly_heartsjephly extends game_view
+{
     function getGameName() {
         return "heartsjephly";
-    }    
-  	function build_page( $viewArgs )
-  	{		
-  	    // Get players & players number
+    }
+
+    function build_page( $viewArgs )
+    {
+        // Get players & players number
         $players = $this->game->loadPlayersBasicInfos();
         $players_nbr = count( $players );
 
@@ -93,9 +94,6 @@
 
         $this->tpl['MY_HAND'] = self::_('My hand');
 
-
         /*********** Do not change anything below this line  ************/
-  	}
-  }
-  
-
+    }
+}

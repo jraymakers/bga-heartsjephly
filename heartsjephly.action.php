@@ -1,51 +1,57 @@
 <?php
 /**
  *------
- * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * heartsjephly implementation : © <Your name here> <Your email address here>
- *
- * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
- * See http://en.doc.boardgamearena.com/Studio for more information.
- * -----
- * 
- * heartsjephly.action.php
- *
- * heartsjephly main action entry point
- *
- *
- * In this file, you are describing all the methods that can be called from your
- * user interface logic (javascript).
- *       
- * If you define a method "myAction" here, then you can call it from your javascript code with:
- * this.ajaxcall( "/heartsjephly/heartsjephly/myAction.html", ...)
- *
- */
-  
-  
-  class action_heartsjephly extends APP_GameAction
-  { 
+* BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+* heartsjephly implementation : © <Your name here> <Your email address here>
+*
+* This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
+* See http://en.doc.boardgamearena.com/Studio for more information.
+* -----
+* 
+* heartsjephly.action.php
+*
+* heartsjephly main action entry point
+*
+*
+* In this file, you are describing all the methods that can be called from your
+* user interface logic (javascript).
+*       
+* If you define a method "myAction" here, then you can call it from your javascript code with:
+* this.ajaxcall( "/heartsjephly/heartsjephly/myAction.html", ...)
+*
+*/
+
+
+class action_heartsjephly extends APP_GameAction
+{
     // Constructor: please do not modify
-   	public function __default()
-  	{
-  	    if( self::isArg( 'notifwindow') )
-  	    {
+    public function __default()
+    {
+        if( self::isArg( 'notifwindow') )
+        {
             $this->view = "common_notifwindow";
-  	        $this->viewArgs['table'] = self::getArg( "table", AT_posint, true );
-  	    }
-  	    else
-  	    {
+            $this->viewArgs['table'] = self::getArg( "table", AT_posint, true );
+        }
+        else
+        {
             $this->view = "heartsjephly_heartsjephly";
             self::trace( "Complete reinitialization of board game" );
-      }
-  	} 
-  	
-  	// TODO: defines your action entry points there
+        }
+    }
 
+    // TODO: defines your action entry points there
+
+    public function playCard() {
+        self::setAjaxMode();
+        $card_id = self::getArg("id", AT_posint, true);
+        $this->game->playCard($card_id);
+        self::ajaxResponse();
+    }
 
     /*
     
     Example:
-  	
+    
     public function myAction()
     {
         self::setAjaxMode();     
@@ -60,9 +66,7 @@
 
         self::ajaxResponse( );
     }
-    
+
     */
 
-  }
-  
-
+}
