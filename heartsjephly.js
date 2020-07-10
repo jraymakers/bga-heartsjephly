@@ -320,6 +320,7 @@ function (dojo, declare) {
             dojo.subscribe('trickWin', this, 'notif_trickWin');
             this.notifqueue.setSynchronous('trickWin', 1000);
             dojo.subscribe('giveAllCardsToPlayer', this, 'notif_giveAllCardsToPlayer');
+            dojo.subscribe('newScores', this, 'notif_newScores');
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods
@@ -366,6 +367,12 @@ function (dojo, declare) {
                     dojo.destroy(node);
                 });
                 anim.play();
+            }
+        },
+
+        notif_newScores: function (notif) {
+            for (var player_id in notif.args.newScores) {
+                this.scoreCtrl[player_id].toValue(notif.args.newScores[player_id]);
             }
         }
 

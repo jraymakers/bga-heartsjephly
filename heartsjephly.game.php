@@ -217,10 +217,16 @@ class heartsjephly extends Table
         self::checkAction('playCard');
         $player_id = self::getActivePlayerId();
         $this->cards->moveCard($card_id, 'cardsontable', $player_id);
-        
-        // TODO check rules here
-
         $currentCard = $this->cards->getCard($card_id);
+        
+        $currentTrickSuit = self::getGameStateValue('trickSuit');
+        if ($currentTrickSuit == 0) {
+            // TODO: handle QS correctly
+            self::setGameStateValue('trickSuit', $currentCard['type']);
+        }
+
+        // TODO: check other rules
+        
         self::notifyAllPlayers(
             'playCard',
             clienttranslate('${player_name} plays ${rank_displayed} ${suit_displayed}'), 
@@ -317,7 +323,26 @@ class heartsjephly extends Table
     function stNextPlayer() {
         if ($this->cards->countCardInLocation('cardsontable') == 4) {
             // end of trick
-            $best_value_player_id = self::activeNextPlayer(); // TODO determine trick winner
+
+            // calculate winner
+            $cards_on_table = $this->cards->getCardsInLocation('cardsontable');
+            $best_value = 0;
+            $best_value_player_id = null;
+            $currentTrickSuit = self::getGameStateValue('trickSuit');
+            foreach ($cards_on_table as $card) {
+                // TODO: handle QS correctly
+                if ($card['type'] == $currentTrickSuit) {
+                    if ($best_value_player_id === null || $card['type_arg'] > $best_value) {
+                        $best_value_player_id = $card['location_arg'];
+                        $best_value = $card['type_arg'];
+                    }
+                }
+            }
+
+            // set active player to winner
+            $this->gamestate->changeActivePlayer($best_value_player_id);
+
+            // move cards to winner
             $this->cards->moveAllCardsInLocation('cardsontable', 'cardswon', null, $best_value_player_id);
 
             $players = self::loadPlayersBasicInfos();
@@ -351,6 +376,58 @@ class heartsjephly extends Table
     }
 
     function stEndHand() {
+        $players = self::loadPlayersBasicInfos();
+
+        $player_to_points = array();
+        foreach ($players as $player_id => $player) {
+            $player_to_points[$player_id] = 0;
+        }
+
+        $cards = $this->cards->getCardsInLocation('cardswon');
+        foreach ($cards as $card) {
+            $player_id = $card['location_arg'];
+            if ($card['type'] == 2) { // 2 == heart
+                $player_to_points[$player_id]++;
+            }
+        }
+
+        foreach ($player_to_points as $player_id => $points) {
+            if ($points != 0) {
+                $sql = "UPDATE player SET player_score=player_score-$points WHERE player_id='$player_id'";
+                self::DbQuery($sql);
+                $heart_number = $player_to_points[$player_id];
+                self::notifyAllPlayers(
+                    'points',
+                    clienttranslate('${player_name} gets ${nbr} hearts and loses ${nbr} points'),
+                    array(
+                        'player_id' => $player_id,
+                        'player_name' => $players[$player_id]['player_name'],
+                        'nbr' => $heart_number
+                    )
+                );
+            } else {
+                self::notifyAllPlayers(
+                    'points',
+                    clienttranslate('${player_name} did not get any hearts'),
+                    array(
+                        'player_id' => $player_id,
+                        'player_name' => $players[$player_id]['player_name']
+                    )
+                );
+            }
+        }
+
+        $newScores = self::getCollectionFromDb("SELECT player_id, player_score FROM player", true);
+        self::notifyAllPlayers('newScores', '', array( 'newScores' => $newScores ) );
+
+        // end of game?
+        foreach ( $newScores as $player_id => $score ) {
+            if ($score <= -100) {
+                $this->gamestate->nextState('endGame');
+                return;
+            }
+        }
+
         $this->gamestate->nextState('nextHand');
     }
 
